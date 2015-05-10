@@ -241,6 +241,9 @@ CNItemPoint CNMakeItemPoint(NSUInteger aColumn, NSUInteger aRow) {
 	CGFloat newHeight = [self allOverRowsInGridView] * self.itemSize.height + _contentInset * 2;
 	if (ABS(newHeight - size.height) > 1) {
 		size.height = newHeight;
+        if (size.height<NSHeight(self.enclosingScrollView.frame)) {
+            size.height=NSHeight(self.enclosingScrollView.frame);
+        }
 		[super setFrameSize:size];
 	}
 
