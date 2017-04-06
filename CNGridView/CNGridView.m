@@ -241,6 +241,9 @@ CNItemPoint CNMakeItemPoint(NSUInteger aColumn, NSUInteger aRow) {
 	CGFloat newHeight = [self allOverRowsInGridView] * self.itemSize.height + _contentInset * 2;
 	if (ABS(newHeight - size.height) > 1) {
 		size.height = newHeight;
+        if (size.height<NSHeight(self.enclosingScrollView.frame)) {
+            size.height=NSHeight(self.enclosingScrollView.frame);
+        }
 		[super setFrameSize:size];
 	}
 
@@ -307,26 +310,45 @@ CNItemPoint CNMakeItemPoint(NSUInteger aColumn, NSUInteger aRow) {
 
 - (void)arrangeGridViewItemsAnimated:(BOOL)animated {
 	// on initial call (aka application startup) we will fade all items (after loading it) in
-	if (isInitialCall && [keyedVisibleItems count] > 0) {
-		isInitialCall = NO;
-
-		[[NSAnimationContext currentContext] setDuration:0.35];
-		[NSAnimationContext runAnimationGroup: ^(NSAnimationContext *context) {
-		    [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
-		        [[item animator] setAlphaValue:1.0];
-			}];
-		} completionHandler:nil];
-	}
-
-	else if ([keyedVisibleItems count] > 0) {
-		[[NSAnimationContext currentContext] setDuration:(animated ? 0.15 : 0.0)];
-		[NSAnimationContext runAnimationGroup: ^(NSAnimationContext *context) {
-		    [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
-		        NSRect newRect = [self rectForItemAtIndex:item.index];
-		        [[item animator] setFrame:newRect];
-			}];
-		} completionHandler:nil];
-	}
+    if ([keyedVisibleItems count] > 0) {
+        if (isInitialCall) {
+            isInitialCall = NO;
+            if (animated) {
+                [[NSAnimationContext currentContext] setDuration:0.35];
+                [NSAnimationContext runAnimationGroup: ^(NSAnimationContext *context) {
+                    [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
+                        [[item animator] setAlphaValue:1.0];
+                        NSRect newRect = [self rectForItemAtIndex:item.index];
+                        [[item animator] setFrame:newRect];
+                    }];
+                } completionHandler:nil];
+            }
+            else{
+                [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
+                    [item setAlphaValue:1.0];
+                    NSRect newRect = [self rectForItemAtIndex:item.index];
+                    [item setFrame:newRect];
+                }];
+            }
+        }
+        else{
+            if (animated) {
+                [[NSAnimationContext currentContext] setDuration:0.15];
+                [NSAnimationContext runAnimationGroup: ^(NSAnimationContext *context) {
+                    [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
+                        NSRect newRect = [self rectForItemAtIndex:item.index];
+                        [[item animator] setFrame:newRect];
+                    }];
+                } completionHandler:nil];
+            }
+            else{
+                [keyedVisibleItems enumerateKeysAndObjectsUsingBlock: ^(id key, CNGridViewItem *item, BOOL *stop) {
+                    NSRect newRect = [self rectForItemAtIndex:item.index];
+                    [item setFrame:newRect];
+                }];
+            }
+        }
+    }
 }
 
 - (NSRange)visibleItemRange {
